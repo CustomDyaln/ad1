@@ -79,6 +79,47 @@ else:
 
 ABT = commands.Bot(command_prefix = "?", self_bot=True, loop=None)
 
+# Auto DM Reply
+def autoReply():
+    check = requests.get('https://discord.com/api/v10/users/@me', headers={'Authorization': token})
+    if check.status_code == 200:
+        lol = json.loads(check.text)
+        if lol['id'] != '0':
+            a = requests.get('https://discord.com/api/v10/users/@me/channels', headers={'Authorization': token})
+            b = json.loads(a.text)
+            for i in b:
+                try:
+                    if i['type'] == int(1):
+                        c = requests.get(f'https://discord.com/api/v10/channels/{i["id"]}/messages', headers={'Authorization': token})
+                        d = json.loads(c.text)
+                        if d[0]['author']['id'] != lol['id']:
+                            requests.post(f'https://discord.com/api/v10/channels/{i["id"]}/messages', headers={'Authorization': token}, json={'content': config["userdata"].get('DmMessage')})                        
+                            break
+                except:
+                    pass
+def autoReplyLoop():
+    while 1:
+        autoReply()
+
+# DM Deleter / Closer
+def deleteDMs():
+    a = requests.get('https://discord.com/api/v10/users/@me/channels', headers={'Authorization': token})
+    b = json.loads(a.text)
+    for i in b:
+        try:
+            if i['type'] == int(1):
+                requests.delete(f'https://discord.com/api/v10/channels/{i["id"]}', headers={'Authorization': token})
+                break
+        except:
+            pass
+
+# Advertiser menu
+def advertiser():
+    while 1:clearConsole();choice=input(Fore.RED+"Advertiser:\n"+Fore.YELLOW+"1. Start advertiser\n2. Add channel\n3. Remove channel\n4. Change message\n5. Change delay\n6. Change DM Response\n7. Auto DM Response\n8. Leave\n");{'1':lambda:sendMessage(),'2':lambda:modifyChannels('add'),'3':lambda:modifyChannels('remove'),'4':lambda:changeMessage(),'5':lambda:changeDelay(),'6':lambda:changeDMResponse(),'7':lambda:(threading.Thread(target=autoReplyLoop).start(),print("Started Auto DM Responder")),'8':lambda:main()}.get(choice,lambda:print('Invalid choice'))();time.sleep(3)
+def main():
+    while 1:clearConsole();deleteDMs();choice=input(Fore.RED+"Home:\n"+Fore.YELLOW+"1. Advertiser\n2. Onliner\n3. Leave\n");{'1':advertiser,'2':onliner,'3':lambda:exit()}.get(choice,lambda:print('Invalid choice'))();time.sleep(3)
+
+
 @ABT.event
 async def on_ready():
     ctypes.windll.kernel32.SetConsoleTitleW("AdBot v1.1")
@@ -86,6 +127,8 @@ async def on_ready():
     print(adbot + Style.RESET_ALL)
     print('Logged in as ' + Fore.RED + f'{ABT.user.name}#{ABT.user.discriminator}' + Style.RESET_ALL)
     advertise.start()
+    main()
+    advertiser()      
 
 @tasks.loop(hours=int(hours))
 async def advertise():
