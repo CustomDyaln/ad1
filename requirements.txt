@@ -1,0 +1,6 @@
+colorama
+requests
+websocket
+discord
+base64
+ctypes
